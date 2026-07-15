@@ -81,10 +81,13 @@ def create_lead(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    first = payload.contacts[0] if payload.contacts else None
     lead = models.Lead(
         client_name=payload.client_name,
-        contact_phone=payload.contact_phone,
-        contact_email=payload.contact_email,
+        contact_person=first.name if first else payload.contact_person,
+        contact_phone=first.phone if first else payload.contact_phone,
+        contact_email=first.email if first else payload.contact_email,
+        address=payload.address,
         source=payload.source,
         status=payload.status,
         notes=payload.notes,
@@ -92,6 +95,16 @@ def create_lead(
     )
     db.add(lead)
     db.flush()
+    for c in payload.contacts:
+        name = (c.name or "").strip()
+        if name:
+            db.add(models.LeadContact(
+                lead_id=lead.id,
+                name=name,
+                designation=c.designation,
+                email=c.email,
+                phone=c.phone,
+            ))
     log_activity(db, current_user.id, lead.id, models.ActionTypeEnum.lead_created,
                  f"{current_user.name} created lead \"{lead.client_name}\"")
     db.commit()
@@ -144,9 +157,35 @@ def update_lead(
     if "owner_id" in data and current_user.role != models.RoleEnum.super_admin:
         del data["owner_id"]  # only admins may reassign leads
 
+    contacts_data = data.pop("contacts", None)
+
     for field, value in data.items():
         setattr(lead, field, value)
     lead.updated_at = datetime.utcnow()
+
+    if contacts_data is not None:
+        db.query(models.LeadContact).filter(models.LeadContact.lead_id == lead.id).delete()
+        for c in contacts_data:
+            name = (c.get("name") or "").strip()
+            if name:
+                db.add(models.LeadContact(
+                    lead_id=lead.id,
+                    name=name,
+                    designation=c.get("designation"),
+                    email=c.get("email"),
+                    phone=c.get("phone"),
+                ))
+        # Keep lead-level contact fields in sync with the first contact
+        if contacts_data:
+            first = contacts_data[0]
+            first_name = (first.get("name") or "").strip()
+            lead.contact_person = first_name or None
+            lead.contact_phone = first.get("phone") or None
+            lead.contact_email = first.get("email") or None
+        else:
+            lead.contact_person = None
+            lead.contact_phone = None
+            lead.contact_email = None
 
     db.flush()
 

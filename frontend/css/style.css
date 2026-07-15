@@ -228,6 +228,13 @@ tbody tr:last-child td { border-bottom: none; }
 .modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 22px; border-top: 1px solid var(--border); }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+/* Multiple contacts form */
+.contacts-section { margin-top: 4px; }
+.contacts-section-label { font-size: 11.5px; font-weight: 700; color: var(--ink-soft); margin-bottom: 8px; }
+.contact-block { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 10px; background: var(--bg); }
+.contact-block-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.contact-block-num { font-size: 12px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+
 /* Lead detail modal */
 .modal-lg { max-width: 680px; }
 .detail-section { padding: 16px 22px; border-top: 1px solid var(--border); }

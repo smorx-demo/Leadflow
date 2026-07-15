@@ -35,6 +35,16 @@ CREATE TABLE leads (
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE lead_contacts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  lead_id UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+  name VARCHAR(200) NOT NULL,
+  designation VARCHAR(200),
+  email VARCHAR(255),
+  phone VARCHAR(50),
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE followups (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   lead_id UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
@@ -55,6 +65,7 @@ CREATE TABLE activities (
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX idx_lead_contacts_lead ON lead_contacts(lead_id);
 CREATE INDEX idx_leads_owner ON leads(owner_id);
 CREATE INDEX idx_leads_status ON leads(status);
 CREATE INDEX idx_followups_lead ON followups(lead_id);

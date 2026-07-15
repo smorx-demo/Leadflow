@@ -423,16 +423,21 @@ function leadsTableHtml(leads) {
     <table class="responsive-cards">
       <thead><tr><th>Client</th><th>Contact</th><th>Location</th><th>Status / Notes</th>${Auth.isAdmin() ? '<th>Owner</th>' : ''}<th>Next action</th></tr></thead>
       <tbody>
-        ${leads.map(l => `
+        ${leads.map(l => {
+          const pc = l.contacts && l.contacts.length > 0
+            ? l.contacts[0]
+            : { name: l.contact_person, designation: null, phone: l.contact_phone, email: l.contact_email };
+          const extraContacts = l.contacts && l.contacts.length > 1 ? ` <span style="color:var(--ink-soft);font-size:11px">+${l.contacts.length - 1} more</span>` : '';
+          return `
           <tr data-open-lead="${l.id}" style="cursor:pointer">
             <td data-label="Client" class="cell-name-cell">
               <div class="cell-name">${esc(l.client_name)}</div>
-              ${l.contact_person ? `<div class="cell-sub">${esc(l.contact_person)}</div>` : ''}
+              ${pc.name ? `<div class="cell-sub">${esc(pc.name)}${pc.designation ? ` · ${esc(pc.designation)}` : ''}${extraContacts}</div>` : ''}
             </td>
             <td data-label="Contact">
-              ${l.contact_phone ? `<div class="cell-name" style="font-size:13.5px">${esc(l.contact_phone)}</div>` : ''}
-              ${l.contact_email ? `<div class="cell-sub">${esc(l.contact_email)}</div>` : ''}
-              ${!l.contact_phone && !l.contact_email ? '—' : ''}
+              ${pc.phone ? `<div class="cell-name" style="font-size:13.5px">${esc(pc.phone)}</div>` : ''}
+              ${pc.email ? `<div class="cell-sub">${esc(pc.email)}</div>` : ''}
+              ${!pc.phone && !pc.email ? '—' : ''}
             </td>
             <td data-label="Location">
               ${l.address ? `<div style="font-size:13px;color:var(--ink)">${esc(truncate(l.address, 40))}</div>` : '<span class="cell-sub">—</span>'}
@@ -444,7 +449,8 @@ function leadsTableHtml(leads) {
             ${Auth.isAdmin() ? `<td data-label="Owner">${esc(l.owner_name || '—')}</td>` : ''}
             <td data-label="Next action">${l.next_action_date ? `<span class="${isOverdue(l.next_action_date) ? 'overdue-text' : ''}">${fmtDate(l.next_action_date)}</span>` : '—'}</td>
           </tr>
-        `).join('')}
+        `;
+        }).join('')}
       </tbody>
     </table>
   `;
@@ -511,10 +517,25 @@ async function openLeadDetail(leadId) {
 
       <div class="detail-section">
         <div class="detail-section-head">Contact information</div>
-        <div class="lead-info-grid">
-          <div><div class="info-label">Contact person</div><div class="info-value">${esc(lead.contact_person || '—')}</div></div>
-          <div><div class="info-label">Contact number</div><div class="info-value">${esc(lead.contact_phone || '—')}</div></div>
-          <div><div class="info-label">Email</div><div class="info-value">${esc(lead.contact_email || '—')}</div></div>
+        ${(() => {
+          const contacts = lead.contacts && lead.contacts.length > 0
+            ? lead.contacts
+            : (lead.contact_person || lead.contact_phone || lead.contact_email)
+              ? [{ name: lead.contact_person, designation: null, phone: lead.contact_phone, email: lead.contact_email }]
+              : [];
+          if (!contacts.length) return `<div class="info-value" style="color:var(--ink-soft);margin-bottom:14px">No contacts added.</div>`;
+          return contacts.map((c, i) => {
+            const notLast = i < contacts.length - 1;
+            const sep = notLast ? 'margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)' : 'margin-bottom:14px';
+            return `<div class="lead-info-grid" style="${sep}">
+                  <div><div class="info-label">Name</div><div class="info-value">${esc(c.name || '—')}</div></div>
+                  <div><div class="info-label">Designation</div><div class="info-value">${esc(c.designation || '—')}</div></div>
+                  <div><div class="info-label">Phone</div><div class="info-value">${esc(c.phone || '—')}</div></div>
+                  <div><div class="info-label">Email</div><div class="info-value">${esc(c.email || '—')}</div></div>
+                </div>`;
+          }).join('');
+        })()}
+        <div class="lead-info-grid" style="margin-top:4px">
           <div><div class="info-label">Source</div><div class="info-value">${esc(lead.source || '—')}</div></div>
           ${Auth.isAdmin() ? `<div><div class="info-label">Owner</div><div class="info-value">${esc(lead.owner_name || '—')}</div></div>` : ''}
           <div><div class="info-label">Created</div><div class="info-value">${fmtDate(lead.created_at)}</div></div>
@@ -576,6 +597,27 @@ async function openLeadDetail(leadId) {
   }
 }
 
+function buildContactBlock(contact = {}) {
+  const div = document.createElement('div');
+  div.className = 'contact-block';
+  div.innerHTML = `
+    <div class="contact-block-header">
+      <span class="contact-block-num">Contact person</span>
+      <button type="button" class="btn btn-ghost btn-sm contact-remove-btn" style="color:var(--danger);padding:3px 8px">× Remove</button>
+    </div>
+    <div class="field-row">
+      <label class="field"><span>Name</span><input type="text" class="c_name" placeholder="Full name" value="${esc(contact.name || '')}"></label>
+      <label class="field"><span>Designation</span><input type="text" class="c_designation" placeholder="e.g. Manager, CEO" value="${esc(contact.designation || '')}"></label>
+    </div>
+    <div class="field-row" style="margin-top:10px">
+      <label class="field"><span>Phone</span><input type="tel" class="c_phone" placeholder="Contact number" value="${esc(contact.phone || '')}"></label>
+      <label class="field"><span>Email</span><input type="email" class="c_email" placeholder="Email address" value="${esc(contact.email || '')}"></label>
+    </div>
+  `;
+  div.querySelector('.contact-remove-btn').addEventListener('click', () => div.remove());
+  return div;
+}
+
 async function openLeadModal(leadId = null, afterSave = null) {
   const isEdit = !!leadId;
   let lead = { client_name: '', contact_person: '', contact_phone: '', contact_email: '', address: '', source: '', status: 'new', notes: '' };
@@ -584,16 +626,14 @@ async function openLeadModal(leadId = null, afterSave = null) {
   openModal(`
     <div class="modal-head"><h3>${isEdit ? 'Edit lead' : 'New lead'}</h3><button class="modal-close" id="closeModalBtn">&times;</button></div>
     <div class="modal-body">
-      <div class="field-row">
-        <label class="field"><span>Company / Client name</span><input type="text" id="f_client_name" value="${esc(lead.client_name)}" required></label>
-        <label class="field"><span>Contact person</span><input type="text" id="f_contact_person" placeholder="Name of person to reach" value="${esc(lead.contact_person || '')}"></label>
+      <label class="field"><span>Company / Client name</span><input type="text" id="f_client_name" value="${esc(lead.client_name)}" required></label>
+      <div class="contacts-section" style="margin-top:14px">
+        <div class="contacts-section-label">Contact people</div>
+        <div id="contactsList"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="addContactBtn" style="margin-top:2px">+ Add contact</button>
       </div>
-      <div class="field-row">
-        <label class="field"><span>Contact number</span><input type="text" id="f_contact_phone" value="${esc(lead.contact_phone || '')}"></label>
-        <label class="field"><span>Email</span><input type="email" id="f_contact_email" value="${esc(lead.contact_email || '')}"></label>
-      </div>
-      <label class="field"><span>Address</span><input type="text" id="f_address" placeholder="Street, City, State…" value="${esc(lead.address || '')}"></label>
-      <div class="field-row">
+      <label class="field" style="margin-top:14px"><span>Address</span><input type="text" id="f_address" placeholder="Street, City, State…" value="${esc(lead.address || '')}"></label>
+      <div class="field-row" style="margin-top:14px">
         <label class="field"><span>Source</span><input type="text" id="f_source" placeholder="Website, Referral…" value="${esc(lead.source || '')}"></label>
         <label class="field"><span>Status</span>
           <select id="f_status">
@@ -612,6 +652,19 @@ async function openLeadModal(leadId = null, afterSave = null) {
     </div>
   `);
   document.querySelector('.modal').classList.add('modal-lg');
+
+  // Populate contacts list
+  const contactsList = document.getElementById('contactsList');
+  let initialContacts = [];
+  if (isEdit && lead.contacts && lead.contacts.length > 0) {
+    initialContacts = lead.contacts;
+  } else if (isEdit && (lead.contact_person || lead.contact_phone || lead.contact_email)) {
+    initialContacts = [{ name: lead.contact_person || '', designation: null, phone: lead.contact_phone || '', email: lead.contact_email || '' }];
+  } else {
+    initialContacts = [{}];
+  }
+  initialContacts.forEach(c => contactsList.appendChild(buildContactBlock(c)));
+  document.getElementById('addContactBtn').addEventListener('click', () => contactsList.appendChild(buildContactBlock()));
 
   document.getElementById('closeModalBtn').addEventListener('click', closeModal);
   document.getElementById('cancelLeadBtn').addEventListener('click', closeModal);
@@ -633,15 +686,25 @@ async function openLeadModal(leadId = null, afterSave = null) {
   }
 
   document.getElementById('saveLeadBtn').addEventListener('click', async (e) => {
+    const contacts = [];
+    document.querySelectorAll('#contactsList .contact-block').forEach(block => {
+      const name = block.querySelector('.c_name').value.trim();
+      if (name) {
+        contacts.push({
+          name,
+          designation: block.querySelector('.c_designation').value.trim() || null,
+          phone: block.querySelector('.c_phone').value.trim() || null,
+          email: block.querySelector('.c_email').value.trim() || null,
+        });
+      }
+    });
     const payload = {
       client_name: document.getElementById('f_client_name').value.trim(),
-      contact_person: document.getElementById('f_contact_person').value.trim() || null,
-      contact_phone: document.getElementById('f_contact_phone').value.trim() || null,
-      contact_email: document.getElementById('f_contact_email').value.trim() || null,
       address: document.getElementById('f_address').value.trim() || null,
       source: document.getElementById('f_source').value.trim() || null,
       status: document.getElementById('f_status').value,
       notes: document.getElementById('f_notes').value.trim() || null,
+      contacts,
     };
     const errEl = document.getElementById('leadFormError');
     if (!payload.client_name) {

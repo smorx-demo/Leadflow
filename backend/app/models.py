@@ -73,6 +73,21 @@ class Lead(Base):
     owner = relationship("User", back_populates="leads", foreign_keys=[owner_id])
     followups = relationship("FollowUp", back_populates="lead", cascade="all, delete-orphan")
     activities = relationship("Activity", back_populates="lead", cascade="all, delete-orphan")
+    contacts = relationship("LeadContact", back_populates="lead", cascade="all, delete-orphan", order_by="LeadContact.created_at")
+
+
+class LeadContact(Base):
+    __tablename__ = "lead_contacts"
+
+    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
+    lead_id = Column(UUID(as_uuid=False), ForeignKey("leads.id"), nullable=False)
+    name = Column(String(200), nullable=False)
+    designation = Column(String(200), nullable=True)
+    email = Column(String(255), nullable=True)
+    phone = Column(String(50), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    lead = relationship("Lead", back_populates="contacts")
 
 
 class FollowUp(Base):

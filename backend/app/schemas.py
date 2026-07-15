@@ -44,6 +44,26 @@ class UserOut(BaseModel):
     created_at: datetime
 
 
+# ---------- Lead Contacts ----------
+
+class LeadContactCreate(BaseModel):
+    name: str
+    designation: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+
+
+class LeadContactOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    lead_id: str
+    name: str
+    designation: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    created_at: datetime
+
+
 # ---------- Leads ----------
 
 class LeadCreate(BaseModel):
@@ -55,6 +75,7 @@ class LeadCreate(BaseModel):
     source: Optional[str] = None
     status: LeadStatusEnum = LeadStatusEnum.new
     notes: Optional[str] = None
+    contacts: List[LeadContactCreate] = []
 
 
 class LeadUpdate(BaseModel):
@@ -67,6 +88,7 @@ class LeadUpdate(BaseModel):
     status: Optional[LeadStatusEnum] = None
     notes: Optional[str] = None
     owner_id: Optional[str] = None  # super admin can reassign
+    contacts: Optional[List[LeadContactCreate]] = None
 
 
 class LeadOut(BaseModel):
@@ -86,6 +108,7 @@ class LeadOut(BaseModel):
     updated_at: datetime
     open_followups: int = 0
     next_action_date: Optional[date] = None
+    contacts: List[LeadContactOut] = []
 
 
 # ---------- Follow-ups ----------

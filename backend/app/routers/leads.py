@@ -104,6 +104,8 @@ def create_lead(
                 designation=c.designation,
                 email=c.email,
                 phone=c.phone,
+                priority=c.priority,
+                solution_notes=c.solution_notes,
             ))
     log_activity(db, current_user.id, lead.id, models.ActionTypeEnum.lead_created,
                  f"{current_user.name} created lead \"{lead.client_name}\"")
@@ -174,6 +176,8 @@ def update_lead(
                     designation=c.get("designation"),
                     email=c.get("email"),
                     phone=c.get("phone"),
+                    priority=c.get("priority") or models.PriorityEnum.medium,
+                    solution_notes=c.get("solution_notes"),
                 ))
         # Keep lead-level contact fields in sync with the first contact
         if contacts_data:

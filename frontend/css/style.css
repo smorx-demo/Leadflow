@@ -186,6 +186,10 @@ button { font-family: inherit; }
 .badge-contacted { background: var(--status-contacted-bg); color: var(--status-contacted); }
 .badge-qualified { background: var(--status-qualified-bg); color: var(--status-qualified); }
 .badge-closed { background: var(--status-closed-bg); color: var(--status-closed); }
+.badge-priority-high { background: var(--danger-bg); color: var(--danger); }
+.badge-priority-medium { background: var(--status-contacted-bg); color: var(--status-contacted); }
+.badge-priority-low { background: var(--status-qualified-bg); color: var(--status-qualified); }
+.badge-priority-other { background: var(--status-closed-bg); color: var(--status-closed); }
 
 /* Tables */
 .table-wrap { overflow-x: auto; }

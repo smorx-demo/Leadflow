@@ -27,6 +27,13 @@ class LeadStatusEnum(str, enum.Enum):
     closed = "closed"
 
 
+class PriorityEnum(str, enum.Enum):
+    high = "high"
+    medium = "medium"
+    low = "low"
+    other = "other"
+
+
 class ActionTypeEnum(str, enum.Enum):
     lead_created = "lead_created"
     lead_updated = "lead_updated"
@@ -85,6 +92,8 @@ class LeadContact(Base):
     designation = Column(String(200), nullable=True)
     email = Column(String(255), nullable=True)
     phone = Column(String(50), nullable=True)
+    priority = Column(Enum(PriorityEnum), nullable=False, default=PriorityEnum.medium)
+    solution_notes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     lead = relationship("Lead", back_populates="contacts")

@@ -7,6 +7,7 @@ const state = {
 
 const STATUS_LABELS = { new: 'New', contacted: 'Contacted', qualified: 'Qualified', closed: 'Closed' };
 const STATUS_COLORS = { new: '#3B82F6', contacted: '#D6960B', qualified: '#1FA971', closed: '#6B7280' };
+const PRIORITY_LABELS = { high: 'High', medium: 'Medium', low: 'Low', other: 'Other' };
 
 // ---------------- Utilities ----------------
 
@@ -527,12 +528,17 @@ async function openLeadDetail(leadId) {
           return contacts.map((c, i) => {
             const notLast = i < contacts.length - 1;
             const sep = notLast ? 'margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)' : 'margin-bottom:14px';
-            return `<div class="lead-info-grid" style="${sep}">
+            const priority = c.priority || 'medium';
+            return `<div style="${sep}">
+                <div class="lead-info-grid">
                   <div><div class="info-label">Name</div><div class="info-value">${esc(c.name || '—')}</div></div>
                   <div><div class="info-label">Designation</div><div class="info-value">${esc(c.designation || '—')}</div></div>
                   <div><div class="info-label">Phone</div><div class="info-value">${esc(c.phone || '—')}</div></div>
                   <div><div class="info-label">Email</div><div class="info-value">${esc(c.email || '—')}</div></div>
-                </div>`;
+                  <div><div class="info-label">Pitch priority</div><div class="info-value"><span class="badge badge-priority-${priority}">${PRIORITY_LABELS[priority] || priority}</span></div></div>
+                </div>
+                ${c.solution_notes ? `<div style="margin-top:10px"><div class="info-label">Advanced solution suggestions</div><div class="info-value" style="margin-top:4px;line-height:1.6;white-space:pre-wrap">${esc(c.solution_notes)}</div></div>` : ''}
+              </div>`;
           }).join('');
         })()}
         <div class="lead-info-grid" style="margin-top:4px">
@@ -613,6 +619,14 @@ function buildContactBlock(contact = {}) {
       <label class="field"><span>Phone</span><input type="tel" class="c_phone" placeholder="Contact number" value="${esc(contact.phone || '')}"></label>
       <label class="field"><span>Email</span><input type="email" class="c_email" placeholder="Email address" value="${esc(contact.email || '')}"></label>
     </div>
+    <div class="field-row" style="margin-top:10px">
+      <label class="field"><span>Pitch priority</span>
+        <select class="c_priority">
+          ${['high', 'medium', 'low', 'other'].map(p => `<option value="${p}" ${(contact.priority || 'medium') === p ? 'selected' : ''}>${PRIORITY_LABELS[p]}</option>`).join('')}
+        </select>
+      </label>
+    </div>
+    <label class="field" style="margin-top:10px"><span>Advanced solution suggestions</span><textarea class="c_solution_notes" rows="2" placeholder="What solution/pitch angle to use with this contact…">${esc(contact.solution_notes || '')}</textarea></label>
   `;
   div.querySelector('.contact-remove-btn').addEventListener('click', () => div.remove());
   return div;
@@ -695,6 +709,8 @@ async function openLeadModal(leadId = null, afterSave = null) {
           designation: block.querySelector('.c_designation').value.trim() || null,
           phone: block.querySelector('.c_phone').value.trim() || null,
           email: block.querySelector('.c_email').value.trim() || null,
+          priority: block.querySelector('.c_priority').value,
+          solution_notes: block.querySelector('.c_solution_notes').value.trim() || null,
         });
       }
     });

@@ -6,6 +6,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TYPE role_enum AS ENUM ('super_admin', 'user');
 CREATE TYPE lead_status_enum AS ENUM ('new', 'contacted', 'qualified', 'closed');
+CREATE TYPE priority_enum AS ENUM ('high', 'medium', 'low', 'other');
 CREATE TYPE action_type_enum AS ENUM (
   'lead_created', 'lead_updated', 'status_changed',
   'followup_logged', 'followup_completed',
@@ -42,6 +43,8 @@ CREATE TABLE lead_contacts (
   designation VARCHAR(200),
   email VARCHAR(255),
   phone VARCHAR(50),
+  priority priority_enum NOT NULL DEFAULT 'medium',
+  solution_notes TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 

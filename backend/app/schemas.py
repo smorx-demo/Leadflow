@@ -2,7 +2,7 @@ from datetime import datetime, date
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr, ConfigDict
 
-from .models import RoleEnum, LeadStatusEnum, ActionTypeEnum
+from .models import RoleEnum, LeadStatusEnum, ActionTypeEnum, PriorityEnum
 
 
 # ---------- Auth ----------
@@ -51,6 +51,8 @@ class LeadContactCreate(BaseModel):
     designation: Optional[str] = None
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
+    priority: PriorityEnum = PriorityEnum.medium
+    solution_notes: Optional[str] = None
 
 
 class LeadContactOut(BaseModel):
@@ -61,6 +63,8 @@ class LeadContactOut(BaseModel):
     designation: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
+    priority: PriorityEnum
+    solution_notes: Optional[str] = None
     created_at: datetime
 
 
